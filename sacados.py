@@ -1,4 +1,4 @@
-from random import randint
+from random import randint 
 
 class Item:
 
@@ -45,25 +45,29 @@ class Backpack:
 
 class Chromosome:
 
-    def __init__(self, max_weight, mutation_rate=10):
+    def __init__(self, max_weight, global_items, mutation_rate=10):
         self.backpack = Backpack(max_weight)
         self.mutation_rate = mutation_rate
+        self.available_items = global_items.copy() # Creating a copy of global items array to preserve it
 
-    def random_init(self, global_items):
-        item = global_items[randint(0, len(global_items)-1)]
+    def random_init(self):
+        item = self.available_items[randint(0, len(self.available_items)-1)]
         while self.backpack.current_weight + item.weight <= self.backpack.max_weight:
             self.backpack.add_item(item)
-            item = global_items[randint(0, len(global_items)-1)]
+            self.available_items.remove(item)
+            item = self.available_items[randint(0, len(self.available_items)-1)]
 
-    def mutate(self, global_items):
+    def mutate(self):
         c = randint(1, 100)
         if c <= self.mutation_rate:
-            old = randint(0, len(self.backpack.items)-1)
-            self.backpack.remove_item(self.backpack.items[old])
-            new = randint(0, len(global_items)-1)
-            while global_items[new].weight + self.backpack.current_weight < self.backpack.max_weight:
-                self.backpack.add_item(global_items[new])
-                new = randint(0, len(global_items)-1)
+            old = self.backpack.items[randint(0, len(self.backpack.items)-1)]
+            self.backpack.remove_item(old)
+            new = self.available_items[randint(0, len(self.available_items)-1)]
+            while new.weight + self.backpack.current_weight < self.backpack.max_weight:
+                self.backpack.add_item(new)
+                self.available_items.remove(new)
+                new = self.available_items.append(old)
+            self.available_items.append(old)
 
     def get_fitness(self):
         return self.backpack.get_total_value()
@@ -85,8 +89,8 @@ class Population:
     def generate_pop(self, max_weight):
         print("Generating population...")
         for i in range(self.n):
-            chromosome = Chromosome(max_weight)
-            chromosome.random_init(self.items)
+            chromosome = Chromosome(max_weight, self.items)
+            chromosome.random_init()
             self.chromosomes.append(chromosome)
             print(chromosome)
 
@@ -101,6 +105,8 @@ class Population:
 
     def choose_item_from_parent(self, c1, c2):
         parent = randint(1, 2)
+        print("Parent 1: " + c1.__str__())
+        print("Parent 2: " + c2.__str__())
         if parent == 1 and c1.get_fitness() != 0:
             item = c1.backpack.items[randint(0, len(c1.backpack.items)-1)]
             c1.backpack.remove_item(item)
@@ -112,12 +118,13 @@ class Population:
         return item
 
     def reproduce(self, c1, c2):
-        son = Chromosome(self.max_weight)
+        son = Chromosome(self.max_weight, self.items)
         item = self.choose_item_from_parent(c1, c2)
         while item.weight + son.backpack.current_weight < son.backpack.max_weight and item.weight != 0:
             son.backpack.add_item(item)
+            son.available_items.remove(item)
             item = self.choose_item_from_parent(c1, c2)
-        son.mutate(self.items)
+        son.mutate()
         print("New son: " + son.__str__())
         return son
 

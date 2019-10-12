@@ -1,4 +1,5 @@
-from random import randint 
+from random import randint
+import copy  
 
 class Item:
 
@@ -8,6 +9,16 @@ class Item:
 
     def __str__(self):
         return "Item: [Value: " + str(self.value) + ", Weight: " + str(self.weight) + "]"
+    
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.value == other.value and self.weight == other.weight
+        return False
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return self.value != other.value or self.weight != other.weight
+        return True
 
 
 class Backpack:
@@ -52,22 +63,25 @@ class Chromosome:
 
     def random_init(self):
         item = self.available_items[randint(0, len(self.available_items)-1)]
-        while self.backpack.current_weight + item.weight <= self.backpack.max_weight:
+        while (self.backpack.current_weight + item.weight <= self.backpack.max_weight) or (self.get_fitness() == 0):
             self.backpack.add_item(item)
             self.available_items.remove(item)
-            item = self.available_items[randint(0, len(self.available_items)-1)]
+            if len(self.available_items) != 0:
+                item = self.available_items[randint(0, len(self.available_items)-1)]
+            else:
+                break
 
     def mutate(self):
         c = randint(1, 100)
         if c <= self.mutation_rate:
             old = self.backpack.items[randint(0, len(self.backpack.items)-1)]
+            self.available_items.append(old)
             self.backpack.remove_item(old)
             new = self.available_items[randint(0, len(self.available_items)-1)]
-            while new.weight + self.backpack.current_weight < self.backpack.max_weight:
-                self.backpack.add_item(new)
-                self.available_items.remove(new)
-                new = self.available_items.append(old)
-            self.available_items.append(old)
+            while new.weight + self.backpack.current_weight > self.backpack.max_weight:
+                new = self.available_items[randint(0, len(self.available_items)-1)]
+            self.backpack.add_item(new)
+            self.available_items.remove(new)
 
     def get_fitness(self):
         return self.backpack.get_total_value()
@@ -95,7 +109,7 @@ class Population:
             print(chromosome)
 
     def generate_items(self):
-        a = randint(1, 10)
+        a = randint(2, self.max_weight)
         print("Number of items will be: " + str(a))
         print("Generating items...")
         for i in range(a):
@@ -120,22 +134,25 @@ class Population:
     def reproduce(self, c1, c2):
         son = Chromosome(self.max_weight, self.items)
         item = self.choose_item_from_parent(c1, c2)
-        while item.weight + son.backpack.current_weight < son.backpack.max_weight and item.weight != 0:
-            son.backpack.add_item(item)
-            son.available_items.remove(item)
+        while item.weight + son.backpack.current_weight <= son.backpack.max_weight and item.weight != 0:
+            print(item)
+            if item in son.available_items:
+                son.backpack.add_item(item)
+                son.available_items.remove(item)
             item = self.choose_item_from_parent(c1, c2)
         son.mutate()
         print("New son: " + son.__str__())
+        assert son.get_fitness() != 0
         return son
 
-    def draw_parent(self):
+    def draw_parent(self, parent1=None):
         a = randint(0, self.get_total_fitness())
         current = 0
         parent = None
         for c in self.chromosomes:
             parent = c
             current += parent.get_fitness()
-            if current > a:
+            if current > a and parent != parent1:
                 return parent
         return parent
 
@@ -148,22 +165,31 @@ class Population:
     def select_parents(self):
         self.chromosomes.sort(key=lambda x: x.get_fitness())
         c1 = self.draw_parent()
-        c2 = self.draw_parent()
+        c2 = self.draw_parent(c1)
         return c1, c2
 
-    def darwin(self):
-        while True:
+    def darwin(self, max_generations=1000):
+        current_gen = 0
+        while current_gen != max_generations:
             new_pop = []
             while len(new_pop) != self.n:
                 c1, c2 = self.select_parents()
-                new_pop.append(self.reproduce(c1, c2))
+                new_pop.append(self.reproduce(copy.deepcopy(c1), copy.deepcopy(c2)))
             self.chromosomes = new_pop
+            current_gen += 1
+    
+    def get_results(self):
+        print("====RESULTS====")
+        self.chromosomes.sort(key=lambda x: x.get_fitness())
+        print("Strongest child: " + str(self.chromosomes.pop()))
+        print("Weakest child: " + str(self.chromosomes[0]))
 
 
 if __name__ == "__main__":
-    max_weight = randint(1, 20)
-    n = randint(2, 30)
+    max_weight = randint(2, 20)
+    n = randint(10, 50)
     print("Max backpack weight is : " + str(max_weight))
     print("Population size will be : " + str(n))
     population = Population(max_weight, n)
     population.darwin()
+    population.get_results()

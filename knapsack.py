@@ -173,7 +173,7 @@ class Population:
             return True
         return False
 
-    def darwin(self, max_generations=1000):
+    def darwin(self, max_generations=1000, gui=None):
         print("Breeding population...")
         current_gen = 0
         while current_gen != max_generations and not(self.check_completion(current_gen)):
@@ -186,13 +186,20 @@ class Population:
             new_pop.extend(parents)
             self.chromosomes = new_pop
             current_gen += 1
+            if gui is not None:
+               if gui.OneLineProgressMeter('Darwin', current_gen+1, max_generations, 'key','Breeding population...') == False:
+                   break
         print("DONE")
     
-    def get_results(self):
+    def print_results(self):
         print("====RESULTS====")
+        strong, weak = self.get_results()
+        print("Strongest child: " + str(strong))
+        print("Weakest child: " + str(weak))
+    
+    def get_results(self):
         self.chromosomes.sort(key=lambda x: x.get_fitness())
-        print("Strongest child: " + str(self.chromosomes.pop()))
-        print("Weakest child: " + str(self.chromosomes[0]))
+        return self.chromosomes.pop(), self.chromosomes[0]
 
 
 if __name__ == "__main__":

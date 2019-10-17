@@ -201,8 +201,8 @@ class Population:
         '''Main function that starts the evolutionary process. Returns when the knapsack problem
         is solved.'''
         print("Breeding population...")
-        current_gen = 0
-        while current_gen != max_generations and not(self.check_completion(current_gen)):
+        self.current_gen = 0
+        while self.current_gen != max_generations and not(self.check_completion(self.current_gen)):
             parents = self.select_parents()
             new_pop = []
             while len(new_pop) + len(parents) != self.n:
@@ -211,9 +211,9 @@ class Population:
                 new_pop.append(self.reproduce(copy.deepcopy(c1), copy.deepcopy(c2)))
             new_pop.extend(parents)
             self.chromosomes = new_pop
-            current_gen += 1
+            self.current_gen += 1
             if gui is not None:
-               if gui.OneLineProgressMeter('Darwin', current_gen+1, max_generations, 'key','Breeding population...') == False:
+               if gui.OneLineProgressMeter('Darwin', self.current_gen+1, max_generations, 'key','Breeding population...') == False:
                    break
         print("DONE")
 

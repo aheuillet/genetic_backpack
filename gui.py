@@ -12,14 +12,9 @@ main_layout = [
     [sg.Submit()]
 ]
 
-result_layout = [
-    [sg.Text('Strongest child: ', text_color='red'), sg.Text('')],
-    [sg.Text('Weakest child: ', text_color='red'), sg.Text('')],
-    [sg.CloseButton(button_text='close')]
-]
 
-window = sg.Window('Genetic Knapsack').Layout(main_layout)
-button, values = window.Read()
+main_window = sg.Window('Genetic Knapsack').Layout(main_layout)
+button, values = main_window.Read()
 
 if values[3] == True:
     seed = randint(20, 100)
@@ -36,6 +31,32 @@ population.darwin(max_generations=max_gen,gui=sg)
 
 strong, weak = population.get_results()
 
-sg.Popup('Results', '=======',  'Strongest child: ' + str(strong), 'Weakest child: ' + str(weak))
+result_layout = [
+    [sg.Text('Results', justification='center', font='Helvetica 20', auto_size_text=True)],
+    [sg.Text('Number of generations: '), sg.Text(str(population.current_gen+1))],
+    [sg.Text('Strongest child: ', text_color='green'), sg.Text(str(strong))],
+    [sg.Text('Weakest child: ', text_color='red'), sg.Text(str(weak))],
+    [sg.CloseButton(button_text='Close')]
+]
+
+result_window = sg.Window('Results').Layout(result_layout)
+
+button, values = result_window.Read()
 
 
+
+
+
+  
+
+
+
+
+
+
+   
+       
+
+
+
+        

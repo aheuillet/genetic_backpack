@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 from random import randint
-from sacados import Population
+from knapsack import Population
 
 sg.ChangeLookAndFeel('Dark')
 
